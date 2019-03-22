@@ -1,0 +1,54 @@
+if (isModule.toBoolean()) {// ① 切换
+    apply plugin: 'com.android.application'
+} else {
+    apply plugin: 'com.android.library'
+}
+
+def config = rootProject.ext// 定义变量
+android {
+    compileSdkVersion config.android.compileSdkVersion
+    defaultConfig {
+        if (isModule.toBoolean()) {// ② library没有applicationId
+            applicationId "com.ff.moduleb"
+        }
+        minSdkVersion config.android.minSdkVersion
+        targetSdkVersion config.android.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main {
+            // ③ 加载不同位置的AndroidManifest
+            if (isModule.toBoolean()) {
+                manifest.srcFile 'src/main/module/AndroidManifest.xml'
+            } else {
+                manifest.srcFile 'src/main/AndroidManifest.xml'
+            }
+        }
+    }
+
+    lintOptions {
+        // 禁用Google Search
+        disable 'GoogleAppIndexingWarning'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.google.zxing:core:$config.dependencies.zxing"
+    annotationProcessor "com.alibaba:arouter-compiler:$config.dependencies.arouter_compiler"
+    api project(':baselib')
+}

@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+
+def config = rootProject.ext// 定义变量
+android {
+    compileSdkVersion config.android.compileSdkVersion
+    defaultConfig {
+        minSdkVersion config.android.minSdkVersion
+        targetSdkVersion config.android.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    api "com.android.support:appcompat-v7:$config.supportVersion"
+    // arouter-api中包含了v4包，与上面v7包中的v4冲突了
+    api("com.alibaba:arouter-api:$config.dependencies.arouter_api") {
+        // 默认情况下v7中是包含V4包的，exclude的意思是去除v4包，这样就可以解决冲突了
+        exclude module: 'support-v4'// 根据组件名排除
+        exclude group: 'com.android.support'// 根据包名排除
+    }
+    api "com.jakewharton:butterknife:$config.dependencies.butterknife"
+    annotationProcessor "com.jakewharton:butterknife-compiler:$config.dependencies.butterknife"
+    api files('libs/zxing.jar')
+}

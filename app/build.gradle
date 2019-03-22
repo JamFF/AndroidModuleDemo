@@ -1,0 +1,33 @@
+apply plugin: 'com.android.application'
+
+def config = rootProject.ext
+android {
+    compileSdkVersion config.android.compileSdkVersion
+    defaultConfig {
+        applicationId "com.ff.ui"
+        minSdkVersion config.android.minSdkVersion
+        targetSdkVersion config.android.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions {
+        // 禁用Google Search
+        disable 'GoogleAppIndexingWarning'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    if (!isModule.toBoolean()) {
+        implementation project(':modulea')
+        implementation project(':moduleb')
+    } else {
+        implementation project(':baselib')
+    }
+}
