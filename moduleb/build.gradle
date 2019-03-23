@@ -3,6 +3,7 @@ if (isModule.toBoolean()) {// ① 切换
 } else {
     apply plugin: 'com.android.library'
 }
+apply plugin: 'com.jakewharton.butterknife'
 
 def config = rootProject.ext// 定义变量
 android {
@@ -40,6 +41,11 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     lintOptions {
         // 禁用Google Search
         disable 'GoogleAppIndexingWarning'
@@ -49,6 +55,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "com.google.zxing:core:$config.dependencies.zxing"
+    annotationProcessor "com.jakewharton:butterknife-compiler:$config.dependencies.butterknife"
     annotationProcessor "com.alibaba:arouter-compiler:$config.dependencies.arouter_compiler"
     api project(':baselib')
 }

@@ -1,7 +1,6 @@
 package com.ff.modulea;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -11,28 +10,41 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.alibaba.android.arouter.launcher.ARouter;
+import com.ff.baselib.base.BaseActivity;
 import com.ff.baselib.config.Constant;
 
+import butterknife.OnClick;
 
-public class MainActivity extends Activity {
+
+public class MainActivity extends BaseActivity {
 
     private static final int REQUEST_SCAN = 0;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        init();
+    protected int getLayoutId() {
+        return R.layout.activity_main;
     }
 
-    private void init() {
-        findViewById(R.id.ll_scan).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getRuntimePermission();
-            }
-        });
+    @Override
+    protected void initView() {
+
+    }
+
+    @Override
+    protected void initData(Bundle savedInstanceState) {
+
+    }
+
+    @Override
+    protected void initEvent() {
+
+    }
+
+    @OnClick(R2.id.ll_scan)
+    void onClick(View v) {
+        if (v.getId() == R.id.ll_scan) {
+            getRuntimePermission();
+        }
     }
 
     // 获得运行时权限

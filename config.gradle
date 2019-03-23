@@ -9,7 +9,7 @@ ext {
     dependencies = [
             arouter_api     : "1.4.1",
             arouter_compiler: "1.2.2",
-            butterknife     : "8.8.1",
+            butterknife     : "9.0.0",
             zxing           : "3.3.3"
     ]
 

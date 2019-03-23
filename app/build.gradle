@@ -10,12 +10,19 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     lintOptions {
         // 禁用Google Search
         disable 'GoogleAppIndexingWarning'
@@ -24,10 +31,12 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    if (!isModule.toBoolean()) {
+    if (isModule.toBoolean()) {
+        // 依赖baselib中的BaseApplication
+        implementation project(':baselib')
+    } else {
+        // modulea和moduleb中依赖了baselib
         implementation project(':modulea')
         implementation project(':moduleb')
-    } else {
-        implementation project(':baselib')
     }
 }

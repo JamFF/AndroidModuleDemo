@@ -1,4 +1,7 @@
 apply plugin: 'com.android.library'
+// 虽然在library中使用butterknife，但仅在BaseActivity中bind，
+// 不需要寻找控件，也就不需要生成R2，所以无需添加plugin
+// apply plugin: 'com.jakewharton.butterknife'
 
 def config = rootProject.ext// 定义变量
 android {
@@ -28,6 +31,7 @@ dependencies {
         exclude group: 'com.android.support'// 根据包名排除
     }
     api "com.jakewharton:butterknife:$config.dependencies.butterknife"
-    annotationProcessor "com.jakewharton:butterknife-compiler:$config.dependencies.butterknife"
+    // 仅在BaseActivity中bind，不需要寻找控件，也就不需要生成java文件，无需使用annotationProcessor
+    // annotationProcessor "com.alibaba:arouter-compiler:$config.dependencies.arouter_compiler"
     api files('libs/zxing.jar')
 }

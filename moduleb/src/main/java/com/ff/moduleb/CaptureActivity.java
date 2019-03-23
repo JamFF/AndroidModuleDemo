@@ -13,14 +13,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -28,6 +26,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.ff.baselib.base.BaseActivity;
 import com.ff.baselib.config.Constant;
 import com.ff.moduleb.utils.BeepManager;
 import com.ff.moduleb.utils.Utils;
@@ -40,12 +39,24 @@ import com.google.zxing.Result;
 
 import java.io.IOException;
 
-@Route(path = "/moduleb/CaptureActivity")
-public class CaptureActivity extends Activity implements CaptureCallback, SurfaceHolder.Callback {
+import butterknife.BindView;
+import butterknife.OnClick;
 
-    private SurfaceView scanPreview; // SurfaceView控件
-    private RelativeLayout scanContainer; // 布局容器
-    private RelativeLayout scanCropView; // 布局中的扫描框
+@Route(path = "/moduleb/CaptureActivity")
+public class CaptureActivity extends BaseActivity implements CaptureCallback, SurfaceHolder.Callback {
+
+    @BindView(R2.id.capture_preview)
+    SurfaceView scanPreview; // SurfaceView控件
+    @BindView(R2.id.capture_container)
+    RelativeLayout scanContainer; // 布局容器
+    @BindView(R2.id.capture_crop_view)
+    RelativeLayout scanCropView; // 布局中的扫描框
+    @BindView(R2.id.scan_line)
+    ImageView scanLine;// 扫描线
+    @BindView(R2.id.tb_light)
+    ToggleButton tbLight;// 开/关灯按钮
+    @BindView(R2.id.tv_light)
+    TextView tvLight;// 开/关灯文字
 
 
     private ObjectAnimator objectAnimator; // 属性动画
@@ -63,21 +74,53 @@ public class CaptureActivity extends Activity implements CaptureCallback, Surfac
     private boolean isPermission;// 是否有权限
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // 保持屏幕常量
+    protected int getLayoutId() {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_capture);
-        initView();
-        initScan();
-        initEvent();
+        return R.layout.activity_capture;
+    }
+
+    @Override
+    protected void initView() {
+        // 扫描线性动画(属性动画可暂停)
+        float curTranslationY = scanLine.getTranslationY();
+        objectAnimator = ObjectAnimator.ofFloat(scanLine, "translationY",
+                curTranslationY, Utils.dp2px(this, 170));
+        // 动画持续的时间
+        objectAnimator.setDuration(4000);
+        // 线性动画 Interpolator 匀速
+        objectAnimator.setInterpolator(new LinearInterpolator());
+        // 动画重复次数
+        objectAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        // 动画如何重复，从下到上，还是重新开始从上到下
+        objectAnimator.setRepeatMode(ValueAnimator.RESTART);
+    }
+
+    @Override
+    protected void initData(Bundle savedInstanceState) {
         getRuntimePermission();
     }
 
-    private void initView() {
-        scanPreview = findViewById(R.id.capture_preview);
-        scanContainer = findViewById(R.id.capture_container);
-        scanCropView = findViewById(R.id.capture_crop_view);
+    @Override
+    protected void initEvent() {
+
+        // 闪光灯控制
+        tbLight.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                tvLight.setText("关灯");
+                if (!isPermission) {
+                    Toast.makeText(CaptureActivity.this, "权限拒绝", Toast.LENGTH_SHORT).show();
+                } else {
+                    Utils.openFlashlight(cameraManager);
+                }
+            } else {
+                tvLight.setText("开灯");
+                if (!isPermission) {
+                    Toast.makeText(CaptureActivity.this, "权限拒绝", Toast.LENGTH_SHORT).show();
+                } else {
+                    Utils.closeFlashlight();
+                }
+            }
+        });
     }
 
     // 获得运行时权限
@@ -94,62 +137,16 @@ public class CaptureActivity extends Activity implements CaptureCallback, Surfac
         }
     }
 
-    // 扫码初始化
-    private void initScan() {
-        ImageView scanLine = findViewById(R.id.scan_line);
-
-        // 扫描线性动画(属性动画可暂停)
-        float curTranslationY = scanLine.getTranslationY();
-        objectAnimator = ObjectAnimator.ofFloat(scanLine, "translationY",
-                curTranslationY, Utils.dp2px(this, 170));
-        // 动画持续的时间
-        objectAnimator.setDuration(4000);
-        // 线性动画 Interpolator 匀速
-        objectAnimator.setInterpolator(new LinearInterpolator());
-        // 动画重复次数
-        objectAnimator.setRepeatCount(ObjectAnimator.INFINITE);
-        // 动画如何重复，从下到上，还是重新开始从上到下
-        objectAnimator.setRepeatMode(ValueAnimator.RESTART);
-    }
-
-    private void initEvent() {
-        final TextView tvLight = findViewById(R.id.tv_light);
-        ToggleButton tbLight = findViewById(R.id.tb_light);
-
-        // 闪光灯控制
-        tbLight.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    tvLight.setText("关灯");
-                    if (!isPermission) {
-                        Toast.makeText(CaptureActivity.this, "权限拒绝", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Utils.openFlashlight(cameraManager);
-                    }
-                } else {
-                    tvLight.setText("开灯");
-                    if (!isPermission) {
-                        Toast.makeText(CaptureActivity.this, "权限拒绝", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Utils.closeFlashlight();
-                    }
-                }
+    @OnClick(R2.id.ll_album)
+    void onClick(View v) {
+        if (v.getId() == R.id.ll_album) {// 打开相册
+            // 打开相册，做权限判断
+            if (!isPermission) {
+                Toast.makeText(CaptureActivity.this, "权限拒绝", Toast.LENGTH_SHORT).show();
+            } else {
+                Utils.openAlbum(CaptureActivity.this);
             }
-        });
-
-        // 打开相册
-        findViewById(R.id.ll_album).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // 打开相册，做权限判断
-                if (!isPermission) {
-                    Toast.makeText(CaptureActivity.this, "权限拒绝", Toast.LENGTH_SHORT).show();
-                } else {
-                    Utils.openAlbum(CaptureActivity.this);
-                }
-            }
-        });
+        }
     }
 
     @Override
@@ -367,49 +364,40 @@ public class CaptureActivity extends Activity implements CaptureCallback, Surfac
         // 相册返回
         if (requestCode == Utils.SELECT_PIC_KITKAT // 4.4及以上图库
                 && resultCode == Activity.RESULT_OK) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    showProgressDialog();
-                    Uri uri = data.getData();
-                    String path = Utils.getPath(CaptureActivity.this, uri);
-                    Result result = Utils.scanningImage(path);
-                    Intent intent = new Intent();
-                    if (result == null) {
-                        intent.putExtra(Constant.BAR_CODE, "未发现二维码/条形码");
-                    } else {
-                        // 数据返回
-                        intent.putExtra(Constant.BAR_CODE, Utils.recode(result.getText()));
-                    }
-                    Utils.setResultAndFinish(CaptureActivity.this, RESULT_OK, intent);
-                    dismissProgressDialog();
+            new Thread(() -> {
+                showProgressDialog();
+                Uri uri = data.getData();
+                String path = Utils.getPath(CaptureActivity.this, uri);
+                Result result = Utils.scanningImage(path);
+                Intent intent = new Intent();
+                if (result == null) {
+                    intent.putExtra(Constant.BAR_CODE, "未发现二维码/条形码");
+                } else {
+                    // 数据返回
+                    intent.putExtra(Constant.BAR_CODE, Utils.recode(result.getText()));
                 }
+                Utils.setResultAndFinish(CaptureActivity.this, RESULT_OK, intent);
+                dismissProgressDialog();
             }).start();
         }
     }
 
     private void showProgressDialog() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (dialog == null) {
-                    dialog = new ProgressDialog(CaptureActivity.this);
-                    dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                }
-                dialog.setMessage("扫描中");    //设置内容
-                dialog.setCancelable(false);//点击屏幕和按返回键都不能取消加载框
-                dialog.show();
+        runOnUiThread(() -> {
+            if (dialog == null) {
+                dialog = new ProgressDialog(CaptureActivity.this);
+                dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             }
+            dialog.setMessage("扫描中");    //设置内容
+            dialog.setCancelable(false);//点击屏幕和按返回键都不能取消加载框
+            dialog.show();
         });
     }
 
     private void dismissProgressDialog() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (dialog != null) {
-                    dialog.dismiss();
-                }
+        runOnUiThread(() -> {
+            if (dialog != null) {
+                dialog.dismiss();
             }
         });
     }
